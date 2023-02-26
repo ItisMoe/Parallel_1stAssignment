@@ -6,18 +6,19 @@
 #define HEIGHT 1200
 
 int main(int argc, char** argv) {
-    double communication_time;
+    double commtime;
     MPI_Init(&argc, &argv);
-    double start_t = MPI_Wtime();
+    double start_time = MPI_Wtime();
     int rank, size;
+    
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    double real_min = -2.0;
+    double real_min = -1.0;
     double real_max = 1.0;
     double imag_min = -1.0;
     double imag_max = 1.0;
-    int max_iterations = 1000;
+    int max_iter = 1000;
 
     int rows_per_process = HEIGHT / size;
     int start_row = rows_per_process * rank;
@@ -38,19 +39,19 @@ int main(int argc, char** argv) {
             double z_real = 0.0;
             double z_imag = 0.0;
 
-            int iterations = 0;
-            while (z_real * z_real + z_imag * z_imag < 4.0 && iterations < max_iterations) {
+            int iter = 0;
+            while (z_real * z_real + z_imag * z_imag < 4.0 && iter < max_iter) {
                 double next_z_real = z_real * z_real - z_imag * z_imag + c_real;
                 double next_z_imag = 2.0 * z_real * z_imag + c_imag;
                 z_real = next_z_real;
                 z_imag = next_z_imag;
-                iterations++;
+                iter++;
             }
 
-            if (iterations == max_iterations) {
+            if (iter == max_iter) {
                 row[x] = 0;
             } else {
-                row[x] = iterations % 256;
+                row[x] = iter % 256;
             }
         }
         int row_index = (y - start_row) * WIDTH;
@@ -69,7 +70,7 @@ int main(int argc, char** argv) {
 	double starttime = MPI_Wtime();
     MPI_Gather(data, WIDTH * rows_per_process, MPI_INT, final_data, WIDTH * rows_per_process, MPI_INT, 0, MPI_COMM_WORLD);
     double endtime = MPI_Wtime();
-    communication_time = endtime-starttime;
+    commtime = endtime-starttime;
 
     free(data);
 
@@ -83,10 +84,10 @@ int main(int argc, char** argv) {
         free(final_data);
     }
     double end_time = MPI_Wtime();
-    double elapsed_time = end_time-start_t;
+    double elapsed_time = end_time-start_time;
     printf("Elapsed time: %f seconds\n", elapsed_time);
 
-    printf("communication_time: %f seconds\n", communication_time);
+    printf("commtime: %f seconds\n", commtime);
     MPI_Finalize();
     return 0;
 }
